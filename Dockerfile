@@ -72,16 +72,19 @@ RUN sed -i.bak "s/riak_cs-VERSION/riak_cs-${RIAK_CS_VERSION}/" /etc/riak/app.con
 
 # Make the Riak, Riak CS, and Stanchion log directories into volumes
 VOLUME /var/lib/riak
+VOLUME /var/lib/riak-cs
+VOLUME /var/lib/stanchion
+
+VOLUME /etc/riak
+VOLUME /etc/riak-cs
+VOLUME /etc/stanchion
+
 VOLUME /var/log/riak
 VOLUME /var/log/riak-cs
 VOLUME /var/log/stanchion
 
 # Open the HTTP port for Riak and Riak CS (S3)
 EXPOSE 8098 8080 22
-
-# Enable insecure SSH key
-# See: https://github.com/phusion/baseimage-docker#using_the_insecure_key_for_one_container_only
-RUN /usr/sbin/enable_insecure_key
 
 # Cleanup
 RUN rm "/riak_${RIAK_VERSION}-1_amd64.deb" && \

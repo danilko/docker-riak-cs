@@ -1,15 +1,15 @@
-.PHONY: all build riak-cs-container start-cluster test-cluster stop-cluster
+.PHONY: all build start-cluster test-cluster stop-cluster
 
 all: stop-cluster riak-cs-container start-cluster
 
-build riak-cs-container:
-	docker build -t "hectcastro/riak-cs" .
+riak-cs-container:
+	eval $(minikube docker-env) && docker build -t "danilko/riak-cs" .
 
 start-cluster:
-	./bin/start-cluster.sh
+	. bin/start-cluster.sh
 
 test-cluster:
-	./bin/test-cluster.sh
+	. bin/test-cluster.sh
 
 stop-cluster:
-	./bin/stop-cluster.sh
+	. bin/stop-cluster.sh

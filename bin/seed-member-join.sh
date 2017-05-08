@@ -36,6 +36,12 @@ if egrep -q "admin-key" /etc/riak-cs/app.config; then
   sudo sv restart riak-cs
   sudo sv restart stanchion
 
+  # Kubernetes Config to populate ADMIN credential to secret
+  # Do a DELETE to ensure password is flushed out (if it is a second request)
+  curl -X DELETE -H "Content-Type:application/json" -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -k https://${KUBERNETES_PORT_443_TCP_ADDR}/api/v1/namespaces/$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)/secrets/riak-cs-admin-credential 
+
+  curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -k https://${KUBERNETES_PORT_443_TCP_ADDR}/api/v1/namespaces/$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)/secrets -d "{\"apiVersion\":\"v1\",\"data\":{\"RIAK_CS_ADMIN_KEY\":\"$(echo ${RIAK_CS_ADMIN_KEY} | base64)\",\"RIAK_CS_ADMIN_SECRET\":\"$(echo ${RIAK_CS_ADMIN_SECRET} | base64)\"},\"kind\":\"Secret\",\"metadata\":{\"name\":\"riak-cs-admin-credential\"}}"
+
   rm /tmp/riak-cs-credentials
 else
   RIAK_CS_ADMIN_KEY=$(egrep "admin_key" /etc/riak-cs/app.config | cut -d'"' -f2)

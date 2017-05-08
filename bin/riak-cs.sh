@@ -3,8 +3,8 @@
 IP_ADDRESS=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
 
 # Ensure correct ownership and permissions on volumes
-chown riakcs:riak /var/log/riak-cs
-chmod 755 /var/log/riak-cs
+chown riakcs:riak /var/log/riak-cs /etc/riak-cs /var/lib/riak-cs
+chmod 755 /var/log/riak-cs /var/log/riak-cs /etc/riak-cs /var/lib/riak-cs
 
 # Open file descriptor limit
 ulimit -n 4096

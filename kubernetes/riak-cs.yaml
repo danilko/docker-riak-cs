@@ -1,0 +1,139 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: riak-cs-namespace
+  labels:
+    name: riak-cs-namespace
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: riak-cs-role
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: riak-cs-role-rolebinding
+  namespace: riak-cs-namespace
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: riak-cs-namespace
+roleRef:
+  kind: ClusterRole
+  name: riak-cs-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata: 
+  name: riak-cs-deployment
+  namespace: riak-cs-namespace
+spec: 
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: riak-cs-deployment
+    spec: 
+      containers: 
+        - 
+          env: 
+            - 
+              name: DOCKER_RIAK_CS_CLUSTER_SIZE
+              value: "1"
+            - 
+              name: DOCKER_RIAK_CS_AUTOMATIC_CLUSTERING
+              value: "1"
+          image: danilko/riak-cs:latest
+          imagePullPolicy: Never
+          name: riak-cs-container
+          livenessProbe:
+            httpGet:
+              path: /riak-cs/ping
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /riak-cs/ping
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          ports: 
+            - 
+              containerPort: 8080
+              protocol: TCP
+            - 
+              containerPort: 8098
+              protocol: TCP
+            - 
+              containerPort: 22
+              protocol: TCP
+          volumeMounts: 
+            - 
+              mountPath: /apps
+              name: riak-cs-apps
+      volumes: 
+        - 
+          hostPath: 
+            path: /var/lib/riak
+          name: riak-cs-apps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: riak-cs-service
+  namespace: riak-cs-namespace
+spec:
+  selector:
+    app: riak-cs-deployment
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: riak-cs-port
+  - port: 8098
+    targetPort: 8098
+    name: riak-port
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: riak-cs-ingress
+  namespace: riak-cs-namespace
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: '*.s3.amazonaws.com'
+    http:
+      paths:
+      - backend:
+          serviceName: riak-cs-service
+          servicePort: 8080
+  - host: 's3.amazonaws.com'
+    http:
+      paths:
+      - backend:
+          serviceName: riak-cs-service
+          servicePort: 8080
+  - host: 'riak-cs.local'
+    http:
+      paths:
+      - backend:
+          serviceName: riak-cs-service
+          servicePort: 8080
+  - host: riak.local
+    http:
+      paths:
+      - backend:
+          serviceName: riak-cs-service
+          servicePort: 8098
+
+
+
