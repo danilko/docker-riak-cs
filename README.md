@@ -1,3 +1,5 @@
+[WARNING] The persistence of volumes is not fully complete, so data will be lost when container is destroyed
+
 This is a [Kubernetes](https://kubernetes.io) project to bring up a local [Riak CS](https://github.com/basho/riak_cs) cluster in Kubernetes
 
 This is based on Docker work by [hectcastro](https://github.com/hectcastro/docker-riak-cs)
@@ -44,6 +46,27 @@ One can see the stats at [http://traefik-ui.local/dashboard/#/](http://traefik-u
 The current configuration is to utilize
 `/riak-cs/ping`
 as health check
+
+## Replication
+
+Cluster size is controlled by replication controller within the Kubernetes deployment
+
+It is currently set to 1
+
+```
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata: 
+  name: riak-cs-deployment
+  namespace: riak-cs-namespace
+spec: 
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: riak-cs-deployment
+```
+
 
 ## Testing
 
