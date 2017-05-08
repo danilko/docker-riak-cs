@@ -7,14 +7,14 @@ This is based on Docker work by [hectcastro](https://github.com/hectcastro/docke
 
 ### Main Objectives
 
-Use [Kubernetes](https://kubernetes.io) for orchestration
-Eliminate SSH needs, credentials are stored in [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/) and can be accessed through Kubernetes API. This [article](http://danilko.blogspot.com/2017/04/kubernetes-share-config-setting.html) explains how this is achieved through Kubernetes API and [Kubernetes RBAC Authorization](https://kubernetes.io/docs/admin/authorization/rbac/)
-Use one central [Træfik](https://github.com/containous/traefik) reverse proxy for all external connections and elimiate need to do custom port binding or forwarding once done
-Utilize Kubernetes [Livenessprobe and Readinessprobe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to monitor the container by default
+* Use [Kubernetes](https://kubernetes.io) for orchestration
+* Eliminate SSH needs, credentials are stored in [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/) and can be accessed through Kubernetes API. This [article](http://danilko.blogspot.com/2017/04/kubernetes-share-config-setting.html) explains how this is achieved through Kubernetes API and [Kubernetes RBAC Authorization](https://kubernetes.io/docs/admin/authorization/rbac/)
+* Use one central [Træfik](https://github.com/containous/traefik) reverse proxy for all external connections and elimiate need to do custom port binding or forwarding once done
+* Utilize Kubernetes [Livenessprobe and Readinessprobe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to monitor the container by default
 
 ### TO DO Items
-Persistent Volume (currently when minikube stop, the data on riak-cs will be lost)
-Internal cluster join
+* Persistent Volume (currently when minikube stop, the data on riak-cs will be lost)
+* Internal cluster join
 
 
 ## Prerequisites
