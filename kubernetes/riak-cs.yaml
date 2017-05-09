@@ -77,13 +77,13 @@ spec:
               protocol: TCP
           volumeMounts: 
             - 
-              mountPath: /apps
-              name: riak-cs-apps
+              mountPath: /var/lib/riak
+              name: riak-cs-var-lib-riak
       volumes: 
         - 
           hostPath: 
-            path: /var/lib/riak
-          name: riak-cs-apps
+            path: /tmp/data
+          name: riak-cs-var-lib-riak
 ---
 apiVersion: v1
 kind: Service

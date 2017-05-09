@@ -1,6 +1,4 @@
 # kubernetes-riak-cs
-[WARNING] The persistence of volumes is not fully complete, so data will be lost when container is destroyed
-
 This is a [Kubernetes](https://kubernetes.io) project to bring up a local [Riak CS](https://github.com/basho/riak_cs) cluster in Kubernetes
 
 This is based on Docker work by [hectcastro](https://github.com/hectcastro/docker-riak-cs)
@@ -13,7 +11,6 @@ This is based on Docker work by [hectcastro](https://github.com/hectcastro/docke
 * Utilize Kubernetes [Livenessprobe and Readinessprobe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/) to monitor the container by default
 
 ### TO DO Items
-* Persistent Volume (currently when minikube stop, the data on riak-cs will be lost)
 * Internal cluster join
 
 
@@ -37,6 +34,12 @@ $       # Speical setting for Fedora 25
 $       if [ -z "$(cat /etc/sysconfig/docker | grep '/etc/docker/certs')" ]; then echo "DOCKER_CERT_PATH=/etc/docker/certs" | sudo tee -a /etc/sysconfig/docker; fi
 $       sudo cp -rf ~/.minikube/certs /etc/docker/
 $       sudo chmod a+r -R /etc/docker/certs
+
+$       # Create volume to persistent data after container stop 
+$       # Need to setup the volume permission correctly on the node (https://github.com/kubernetes/kubernetes/issues/31269)
+$       minikube ssh 'mkdir -p /tmp/data; chmod a+rwt /tmp/data; chcon -Rt svirt_sandbox_file_t /tmp/data;'
+$       # Note: If the instance/cluster has problem or want new cluster, please delete the temp data
+$       # minikube ssh 'rm -rf /tmp/data; mkdir -p /tmp/data; chmod a+rwt /tmp/data; chcon -Rt svirt_sandbox_file_t /tmp/data'
 
 $       docker build -t "danilko/riak-cs" .
 $       kubectl apply -f kubernetes/traefik.yaml

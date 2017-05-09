@@ -9,6 +9,7 @@ if [ "${SERF_EVENT}" != "member-join" ] && [ "${SERF_SELF_NAME}" = "riak-cs01" ]
   exit 0
 fi
 
+
 # Have the admin credentials been created yet?
 if egrep -q "admin-key" /etc/riak-cs/app.config; then
   # Wait for the Riak CS HTTP interface to come up
@@ -25,6 +26,16 @@ if egrep -q "admin-key" /etc/riak-cs/app.config; then
   RIAK_CS_ADMIN_KEY=$(egrep -o "\{.*\}" /tmp/riak-cs-credentials | python3 -mjson.tool | egrep "key_id" | cut -d'"' -f4)
   RIAK_CS_ADMIN_SECRET=$(egrep -o "\{.*\}" /tmp/riak-cs-credentials  | python3 -mjson.tool | egrep "key_secret" | cut -d'"' -f4)
 
+  # Kubernetes Config to populate ADMIN credential to secret
+  if [ -z "${RIAK_CS_ADMIN_KEY}" ];
+  then
+    OUTPUT=$(curl -X GET -H "Content-Type:application/json" -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -k https://${KUBERNETES_PORT_443_TCP_ADDR}/api/v1/namespaces/$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)/secrets/riak-cs-admin-credential | python3 -mjson.tool)
+
+    RIAK_CS_ADMIN_KEY=$(cat $OUTPUT | python3 -mjson.tool | egrep "RIAK_CS_ADMIN_KEY" | cut -d'"' -f4 )
+    RIAK_CS_ADMIN_SECRET=$(cat $OUTPUT | python3 -mjson.tool | egrep "RIAK_CS_ADMIN_SECRET" | cut -d'"' -f4 )
+  fi
+
+
   # Populate admin credentials locally
   sudo su -c "sed -i 's/admin-key/${RIAK_CS_ADMIN_KEY}/' /etc/riak-cs/app.config" - root
   sudo su -c "sed -i 's/admin-secret/${RIAK_CS_ADMIN_SECRET}/' /etc/riak-cs/app.config" - root
@@ -36,10 +47,7 @@ if egrep -q "admin-key" /etc/riak-cs/app.config; then
   sudo sv restart riak-cs
   sudo sv restart stanchion
 
-  # Kubernetes Config to populate ADMIN credential to secret
-  # Do a DELETE to ensure password is flushed out (if it is a second request)
-  curl -X DELETE -H "Content-Type:application/json" -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -k https://${KUBERNETES_PORT_443_TCP_ADDR}/api/v1/namespaces/$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)/secrets/riak-cs-admin-credential 
-
+  # Post the secret into secret API
   curl -X POST -H "Content-Type:application/json" -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -k https://${KUBERNETES_PORT_443_TCP_ADDR}/api/v1/namespaces/$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)/secrets -d "{\"apiVersion\":\"v1\",\"data\":{\"RIAK_CS_ADMIN_KEY\":\"$(echo ${RIAK_CS_ADMIN_KEY} | base64)\",\"RIAK_CS_ADMIN_SECRET\":\"$(echo ${RIAK_CS_ADMIN_SECRET} | base64)\"},\"kind\":\"Secret\",\"metadata\":{\"name\":\"riak-cs-admin-credential\"}}"
 
   rm /tmp/riak-cs-credentials
